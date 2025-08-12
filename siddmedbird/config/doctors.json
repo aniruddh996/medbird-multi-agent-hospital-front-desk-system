@@ -1,0 +1,22 @@
+{
+  "d001": {
+    "doctor_id": "d001",
+    "name": "Dr. Maya Patel",
+    "specialization": "Internal Medicine",
+    "conditions": ["cough", "fever", "cold", "flu", "general"],
+    "email": "siddharthsaravanan27@gmail.com",
+    "mobile": "+12027439829",
+    "location": "Room 304, MedBird Clinic, DC",
+    "weekly_schedule": "Mon-Fri 10:00-18:00"
+  },
+  "d002": {
+    "doctor_id": "d002",
+    "name": "Dr. Rafael Ortega",
+    "specialization": "Cardiology",
+    "conditions": ["chest pain", "palpitations", "shortness of breath"],
+    "email": "siddharthsaravanan27@gmail.com",
+    "mobile": "+12027439829",
+    "location": "Cardio Wing, MedBird Hospital, DC",
+    "weekly_schedule": "Mon-Fri 09:00-17:00"
+  }
+}
