@@ -1,0 +1,46 @@
+[
+  {
+    "patient_name": "Sidd",
+    "contact": "siddharth.saravanan@gwu.edu",
+    "condition": "cold",
+    "doctor_id": "d001",
+    "doctor_name": "Dr. Maya Patel",
+    "specialty": "Internal Medicine",
+    "location": "Room 304, MedBird Clinic, DC",
+    "visit_type": "in_person",
+    "slot": "2025-08-13 10:00"
+  },
+  {
+    "patient_name": "Aswin",
+    "contact": "siddharth.saravanan@gwu.edu",
+    "condition": "chest pain",
+    "doctor_id": "d001",
+    "doctor_name": "Dr. Maya Patel",
+    "specialty": "Internal Medicine",
+    "location": "Room 304, MedBird Clinic, DC",
+    "visit_type": "in_person",
+    "slot": "2025-08-13 18:30"
+  },
+  {
+    "patient_name": "Ashwin",
+    "contact": "siddharth.saravanan@gwu.edu",
+    "condition": "shortness of breath",
+    "doctor_id": "d002",
+    "doctor_name": "Dr. Rafael Ortega",
+    "specialty": "Cardiology",
+    "location": "Cardio Wing, MedBird Hospital, DC",
+    "visit_type": "in_person",
+    "slot": "2025-08-13 09:00"
+  },
+  {
+    "patient_name": "Anil",
+    "contact": "aniruddhsrm97@gmail.com",
+    "condition": "fever",
+    "doctor_id": "d001",
+    "doctor_name": "Dr. Maya Patel",
+    "specialty": "Internal Medicine",
+    "location": "Room 304, MedBird Clinic, DC",
+    "visit_type": "in_person",
+    "slot": "2025-08-13 10:30"
+  }
+]
