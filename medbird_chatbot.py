@@ -11,7 +11,10 @@ WX_URL = os.getenv("WX_URL", "https://us-south.ml.cloud.ibm.com")
 WX_API_KEY = "FrTeMV6PrYLAWNt4nsbIFFGhyXuSW3bw0CMtcKUpLwh3" # required
 WX_PROJECT_ID = "3beeec8a-fb9a-4fd0-9acd-8b3479e60625"  # required
 
-INSTRUCTIONS_PATH = Path(os.getenv("INSTRUCTIONS_PATH", "C:\\Users\\Aniruddh Rajagopal\\Downloads\\instructions to chatbot.txt"))
+INSTRUCTIONS_PATH = Path(os.getenv(
+    "INSTRUCTIONS_PATH",
+    "C:\\Users\\Aniruddh Rajagopal\\Downloads\\instructions to chatbot.txt"
+))
 
 # Minimal example roster — replace with your real list.
 ROSTER = """\
@@ -40,18 +43,49 @@ model = ModelInference(
 )
 
 params = TextChatParameters(
-    temperature=0.2,   # keep tight for slot-filling
-    max_tokens=350,
+    temperature=0.2,        # tight for slot-filling
+    max_tokens=220,         # short turns; prevents rambles
     top_p=0.9,
+    # Some SDK versions support stop sequences; if yours does, uncomment:
+    # stop_sequences=["\nyou:", "\nYou:", "\nuser:", "\nUser:"]
 )
 
 # ---------------------------
 # Chat state
 # ---------------------------
 history = [{"role": "system", "content": system_message}]
-BOOKING_RE = re.compile(r"^BOOKING_REQUEST\s*:\s*(\{.*\})\s*$", re.DOTALL)
+
+# Booking detector – allow multiline, tolerate spaces
+BOOKING_RE = re.compile(
+    r"^BOOKING_REQUEST\s*:\s*(\{.*\})\s*$",
+    re.DOTALL | re.MULTILINE
+)
+
+def clean_reply(text: str) -> str:
+    """
+    Keep only the assistant’s message. If a BOOKING_REQUEST is present,
+    return *only* that exact line. Otherwise, strip any accidental 'you:' or 'assistant:'.
+    """
+    t = text.strip()
+
+    # If booking line exists, return exactly that line
+    m = BOOKING_RE.search(t)
+    if m:
+        return m.group(0).strip()
+
+    # Stop at the point it tries to write user lines
+    t = re.split(r'\n(?:you:|user:)\s*', t, flags=re.IGNORECASE)[0]
+
+    # Remove accidental "assistant:" prefixes
+    t = re.sub(r'^(assistant:\s*)', '', t.strip(), flags=re.IGNORECASE)
+
+    # Keep it to one short message
+    return t.strip()
 
 def stream_chat(messages):
+    """
+    Stream but *don’t* print chunk-by-chunk; we want to clean the full text first.
+    """
     for chunk in model.chat_stream(messages=messages, params=params):
         if not isinstance(chunk, dict):
             continue
@@ -65,37 +99,38 @@ def stream_chat(messages):
 def ask(user_text: str):
     history.append({"role": "user", "content": user_text})
 
-    print("\nassistant: ", end="", flush=True)
+    # Collect full reply first
     reply_parts = []
     try:
         for piece in stream_chat(history):
             reply_parts.append(piece)
-            sys.stdout.write(piece)
-            sys.stdout.flush()
     except Exception as e:
-        print(f"\n[stream error -> fallback] {e}")
+        # Fallback to non-streaming
         out = model.chat(messages=history, params=params)
         reply_parts = [out["choices"][0]["message"]["content"]]
-        print(reply_parts[0], end="")
 
-    reply = "".join(reply_parts) if reply_parts else ""
+    reply_raw = "".join(reply_parts) if reply_parts else ""
+    reply = clean_reply(reply_raw)
+
+    # Print once, after cleaning
+    print("\nassistant: " + reply)
+
+    # Append cleaned reply to history (prevents poisoning with 'you:' lines)
     history.append({"role": "assistant", "content": reply})
-    print()  # newline
 
-    # Optional: if the model outputs the booking handoff line, surface it clearly
-    m = BOOKING_RE.search(reply.strip())
+    # Detect booking line (post-clean)
+    m = BOOKING_RE.search(reply)
     if m:
         try:
             booking = json.loads(m.group(1))
             print("\n[BOOKING_REQUEST detected]")
             print(json.dumps(booking, indent=2))
+            # (Later) trigger summary/notifications here, or emit an event/DB write
         except json.JSONDecodeError:
             pass
 
 def main():
     print("Doctor Booking Chat (Prompt-Lab style). Type 'quit' to exit.")
-    # Kickstart: model will ask the first question per your instructions
-    # (We can send an empty user message or let the user begin.)
     while True:
         try:
             user_text = input("you: ").strip()
