@@ -142,6 +142,36 @@ def _append_appointment(booking: dict):
     cur.append(booking)
     save_json(APPTS_PATH, cur)
 
+# >>> added: PID file + helper to keep one reminder loop
+PID_FILE = BASE / "data" / "reminder_loop.pid"
+
+def _reminder_loop_running() -> bool:
+    try:
+        if PID_FILE.exists():
+            pid = int(PID_FILE.read_text().strip())
+            # os.kill(pid, 0) raises OSError if not running (POSIX/macOS)
+            os.kill(pid, 0)
+            return True
+    except Exception:
+        try:
+            PID_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+    return False
+
+def _start_reminder_loop():
+    if _reminder_loop_running():
+        return
+    (BASE / "data").mkdir(parents=True, exist_ok=True)
+    # start reminder loop in background, checking every 60s
+    proc = subprocess.Popen([sys.executable, REMINDER, "--loop", "--interval", "60", "--doctors", str(DOCTORS_PATH)])
+    try:
+        PID_FILE.write_text(str(proc.pid))
+    except Exception:
+        pass
+    print(f"[CHATBOT] reminder loop started pid={proc.pid}")
+# <<< added
+
 def ask(user_text: str):
     history.append({"role": "user", "content": user_text})
     reply_parts = []
@@ -181,11 +211,15 @@ def ask(user_text: str):
     except Exception as e:
         print(f"[CHATBOT] notifier error: {e}")
 
-    # 3) Register reminders (day-before & 2 hours before)
+    # 3) Register reminders (your reminder_agent defaults decide offsets; set to 2h & 10m there)
     try:
         subprocess.call([sys.executable, REMINDER, "--booking", json.dumps(booking), "--doctors", str(DOCTORS_PATH)])
     except Exception as e:
         print(f"[CHATBOT] reminder error: {e}")
+
+    # >>> added: ensure reminder loop is running in background
+    _start_reminder_loop()
+    # <<< added
 
 def main():
     print("MedBird — Appointment Chat. Type 'quit' to exit.")
