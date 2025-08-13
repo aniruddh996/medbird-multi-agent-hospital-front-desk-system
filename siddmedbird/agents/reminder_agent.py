@@ -1,11 +1,12 @@
-import os, json, time, argparse
+import os, json, time, argparse, smtplib
 from pathlib import Path
 from datetime import datetime, timedelta
-import smtplib
 from email.mime.text import MIMEText
 
-REMINDERS_PATH = Path("data/reminders.json")
-DOCTORS_PATH   = Path("config/doctors.json")
+# Anchor all paths to project root (one level up from agents/)
+BASE = Path(__file__).resolve().parents[1]
+REMINDERS_PATH = BASE / "data" / "reminders.json"
+DEFAULT_DOCTORS_PATH = BASE / "config" / "doctors.json"
 
 def load_json(path, default):
     try:
@@ -14,13 +15,15 @@ def load_json(path, default):
         return default
 
 def save_json(path, data):
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 def _send_email(to_email, subject, body):
+    # NOTE: Prefer env vars; if empty, skip sending
     smtp_user = os.getenv("SMTP_USER", "siddharths2709@gmail.com")
     smtp_pass = os.getenv("SMTP_PASS", "qmgf oleb bwow slkd")
-    if not smtp_user or not smtp_pass:
-        print("[reminder] SMTP creds missing; skipping email.")
+    if not smtp_user or not smtp_pass or not to_email:
+        print("[reminder] SMTP creds missing or no recipient; skipping email.")
         return
     msg = MIMEText(body)
     msg["From"] = os.getenv("EMAIL_FROM", smtp_user)
@@ -32,9 +35,11 @@ def _send_email(to_email, subject, body):
         server.sendmail(msg["From"], [to_email], msg.as_string())
     print(f"[reminder] Sent email -> {to_email}")
 
-def add_reminder(booking, offsets_minutes=(24*60, 120)):
+def add_reminder(booking, offsets_minutes=(120, 10)):
     """
-    Register reminders for a booking. offsets_minutes are minutes before appt (e.g., 1440 = 1 day, 120 = 2 hours).
+    Register reminders for a booking.
+    Default: 120 minutes (2 hours) and 10 minutes before the appointment.
+    If you also want day-before, change to (1440, 120, 10).
     """
     store = load_json(REMINDERS_PATH, {"reminders": []})
     slot = booking.get("slot") or booking.get("datetime")
@@ -49,23 +54,25 @@ def add_reminder(booking, offsets_minutes=(24*60, 120)):
             "kind": f"T-{mins}m"
         })
     save_json(REMINDERS_PATH, store)
-    print(f"[reminder] Registered {len(offsets_minutes)} reminders for {slot}")
+    print(f"[reminder] Registered {len(offsets_minutes)} reminders for {slot} -> {offsets_minutes}")
 
-def loop(interval=60):
-    doctors = load_json(DOCTORS_PATH, {})
+def loop(doctors_path: Path, interval=60):
+    doctors = load_json(doctors_path, {})
+    print(f"[reminder] Loop running. Checking every {interval}s\n  reminders: {REMINDERS_PATH}\n  doctors:   {doctors_path}")
     while True:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+        now_min = datetime.now().strftime("%Y-%m-%d %H:%M")  # minute precision
         store = load_json(REMINDERS_PATH, {"reminders": []})
         changed = False
 
         for r in store["reminders"]:
-            if r.get("sent"): 
+            if r.get("sent"):
                 continue
-            if r.get("remind_at") == now:
+
+            if r.get("remind_at") == now_min:
                 b = r["booking"]
                 doctor = doctors.get(b.get("doctor_id"), {})
                 doc_email = doctor.get("email")
-                doc_name  = doctor.get("name","Doctor")
+                doc_name  = doctor.get("name", "Doctor")
 
                 # Patient email if contact is an email
                 contact = b.get("contact") or b.get("patient_email")
@@ -98,16 +105,20 @@ def loop(interval=60):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--booking", help="JSON booking to register reminders")
-    ap.add_argument("--doctors", help="Path to doctors.json (optional)")
-    ap.add_argument("--loop", action="store_true", help="Run scheduler loop")
+    ap.add_argument("--doctors", help="Path to doctors.json (optional)", default=str(DEFAULT_DOCTORS_PATH))
+    ap.add_argument("--loop", action="store_true", help="Run scheduler loop continuously")
     ap.add_argument("--interval", type=int, default=60, help="Loop check interval seconds")
     args = ap.parse_args()
 
+    doctors_path = Path(args.doctors)
+
     if args.booking:
         booking = json.loads(args.booking)
-        add_reminder(booking)
+        # Default offsets now 2h and 10m
+        add_reminder(booking, offsets_minutes=(120, 10))
+
     if args.loop:
-        loop(args.interval)
+        loop(doctors_path, args.interval)
 
 if __name__ == "__main__":
     main()
