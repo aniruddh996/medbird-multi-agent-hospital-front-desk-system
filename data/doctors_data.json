@@ -1,0 +1,13 @@
+{
+  "doctor_id": "d003",
+  "name": "Dr. Aisha Khan",
+  "specialization": "Cardiology",
+  "license_number": "A14",
+  "years_of_experience": 8,
+  "gender": "F",
+  "mobile": "123454789",
+  "doj": "2017-12-22T00:00:00.000+00:00",
+  "weekly_schedule": "M-F 10.00am - 06.00pm",
+  "email": "spam3@xyz.com",
+  "referral_code": "mp003"
+}

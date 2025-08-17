@@ -1,0 +1,25 @@
+{
+  "patient_name": "sure",
+  "contact": "aniruddhsrm97@gmail.com",
+  "condition": "severe chest pain",
+  "doctor_id": "d003",
+  "doctor_name": "Dr. Aisha Khan",
+  "specialty": "Cardiology",
+  "location": "Cardiology Department",
+  "visit_type": "in-person",
+  "appointment_slot": "Monday, August 18 at 6:00 PM",
+  "selected_day": "Monday",
+  "selected_time": "6:00 PM",
+  "duration": null,
+  "triage": {},
+  "medical": {
+    "allergies": "None",
+    "medications": "Xanax for blood pressure",
+    "gender": null,
+    "dob": null
+  },
+  "booking_id": "apt_20250817_065106_d003",
+  "status": "confirmed",
+  "created_at": "2025-08-17T06:51:06.320+00:00",
+  "booking_method": "streamlit_chatbot"
+}
