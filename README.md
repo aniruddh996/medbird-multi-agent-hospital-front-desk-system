@@ -12,6 +12,9 @@ Clinical Summary: Fixed-format patient summary for doctors (Streamlit)
 
 AI: IBM watsonx Granite via ModelInference.chat
 
+
+# Demo
+
 https://youtu.be/vM9zD4_DfPU
 
 # Why MedBird
