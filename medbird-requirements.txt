@@ -1,0 +1,7 @@
+# Core app
+streamlit>=1.32,<2
+pymongo[srv]>=4.6
+ibm-watsonx-ai>=1.4.0
+
+# Timezone data for zoneinfo on Windows/containers
+tzdata>=2024.1
