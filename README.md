@@ -24,9 +24,14 @@ Scheduling and intake create bottlenecks for clinics. Patients want simple, natu
 # Features
 
 Understands free-text symptoms and maps to the right specialist
+
 Interprets time phrases (“Monday 10am”, “tomorrow morning”) within working hours
+
 Validates email/phone before confirming
+
 Persists to MongoDB (appointments, users upsert)
+
 Sends email confirmations (patient) and optional doctor notifications
+
 Generates a clean, no-hallucination clinical summary for physicians
 
